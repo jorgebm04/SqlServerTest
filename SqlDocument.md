@@ -430,3 +430,298 @@ CREATE TABLE EjemploTabla (
     Descripcion VARCHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AS -- Collation case-sensitive (CS) con acentos (AS)
 );
 ```
+
+# Índices
+
+## Diferencia entre índice clusterizado y no-clusterizado
+
+En bases de datos, los índices son estructuras que mejoran la velocidad de recuperación de datos. Existen dos tipos principales de índices: los índices clusterizados y los índices no-clusterizados. La diferencia entre ellos radica en cómo organizan los datos en la tabla y cómo gestionan la estructura de almacenamiento. Aquí están las diferencias clave:
+
+### Índice Clusterizado (Clustered Index)
+
+1. **Organización de Datos:**
+
+    - Un índice clusterizado determina el orden físico en el que se almacenan las filas de la tabla.
+    - Los datos de la tabla se almacenan directamente en las hojas del índice.
+
+2. **Estructura:**
+
+    - Hay solo un índice clusterizado permitido por tabla, ya que las filas de la tabla solo pueden almacenarse en un orden físico.
+    - El índice clusterizado ordena y almacena las filas de datos en la tabla en función de sus claves de índice.
+
+3. **Rendimiento:**
+
+    - Es más rápido para recuperar rangos de datos debido a la ordenación física de las filas.
+    - Puede ser más lento para insertar, actualizar o eliminar registros debido a la necesidad de mantener el orden físico de las filas.
+
+4. **Espacio en Disco:**
+    - Generalmente, puede requerir más espacio en disco porque los datos y el índice están combinados.
+
+### Índice No-Clusterizado (Non-Clustered Index)
+
+1. **Organización de Datos:**
+
+    - Un índice no-clusterizado no afecta el orden físico de las filas en la tabla.
+    - En su lugar, el índice almacena una copia de las claves del índice junto con un puntero a la ubicación de los datos correspondientes en la tabla.
+
+2. **Estructura:**
+
+    - Se pueden crear múltiples índices no-clusterizados en una sola tabla.
+    - El índice no-clusterizado tiene su propia estructura de almacenamiento separada de los datos de la tabla.
+
+3. **Rendimiento:**
+
+    - Es más rápido para búsquedas específicas y consultas que no requieren un rango de datos grande.
+    - Puede ser más eficiente para insertar, actualizar o eliminar registros ya que no necesita reorganizar los datos de la tabla.
+
+4. **Espacio en Disco:**
+    - Generalmente, requiere espacio adicional en disco para almacenar las estructuras de índice, pero no afecta el orden físico de las filas de la tabla.
+
+### Ejemplo para Clarificar
+
+-   **Índice Clusterizado:** Supongamos que tienes una tabla de empleados y creas un índice clusterizado basado en el campo "EmployeeID". Las filas de la tabla se almacenarán físicamente en el disco en el orden de "EmployeeID".
+-   **Índice No-Clusterizado:** Ahora, si creas un índice no-clusterizado en el campo "LastName", se creará una estructura separada que contiene los valores de "LastName" y punteros a las filas correspondientes en la tabla, pero no cambiará el orden físico de las filas en la tabla.
+
+En resumen, la principal diferencia radica en cómo organizan y gestionan los datos físicamente en la tabla. Un índice clusterizado determina el orden físico de los datos, mientras que un índice no-clusterizado crea una estructura separada para gestionar los punteros a los datos.
+
+### Crear un Índice Clusterizado
+
+Supongamos que tienes una tabla llamada `Empleados` y quieres crear un índice clusterizado en el campo `EmployeeID`.
+
+```sql
+-- Crear la tabla Empleados
+CREATE TABLE Empleados (
+    EmployeeID INT PRIMARY KEY,
+    Nombre VARCHAR(50),
+    Apellido VARCHAR(50),
+    FechaContratacion DATE
+);
+
+-- Crear el índice clusterizado en el campo EmployeeID
+CREATE CLUSTERED INDEX IDX_EmployeeID ON Empleados(EmployeeID);
+
+```
+
+### Crear un Índice no Clusterizado
+
+Ahora, supongamos que deseas crear un índice no-clusterizado en el campo Apellido de la misma tabla Empleados.
+
+```sql
+-- Crear el índice no-clusterizado en el campo Apellido
+CREATE NONCLUSTERED INDEX IDX_Apellido ON Empleados(Apellido);
+
+```
+
+## Tipos de Índices
+
+Existen varios tipos de índices en las bases de datos, cada uno diseñado para diferentes propósitos y tipos de consultas. Aquí están algunos de los tipos de índices más comunes además de los índices clusterizados y no-clusterizados:
+
+### Índices Únicos (Unique Indexes)
+
+-   Garantizan la unicidad de los valores en una o más columnas.
+-   No permiten valores duplicados en las columnas indexadas.
+
+```sql
+CREATE UNIQUE INDEX IDX_UniqueEmail ON Empleados(Email);
+```
+
+### Índices Compuestos (Composite Indexes)
+
+-   Crean un índice en dos o más columnas de una tabla.
+-   Útil para consultas que filtran o clasifican por múltiples columnas.
+
+```sql
+CREATE INDEX IDX_Composite ON Empleados(Apellido, Nombre);
+```
+
+### Índices de Texto Completo (Full-Text Indexes)
+
+-   Usados para búsquedas de texto en grandes columnas de texto.
+-   Permiten búsquedas de palabras o frases dentro de textos largos.
+
+```sql
+CREATE FULLTEXT INDEX ON Documentos(Texto) WITH STOPLIST = SYSTEM;
+```
+
+### Índices Espaciales (Spatial Indexes)
+
+-   Usados para datos espaciales como coordenadas geográficas.
+-   Facilitan consultas espaciales como intersecciones, distancias, etc.
+
+```sql
+CREATE SPATIAL INDEX IDX_SpatialLocation ON Lugares(Location);
+```
+
+### Índices de ColumnStore (Columnstore Indexes)
+
+-   Optimizados para consultas de análisis y grandes volúmenes de datos.
+-   Almacenan datos en formato columnar en lugar de filas.
+
+```sql
+CREATE CLUSTERED COLUMNSTORE INDEX IDX_ColumnStore ON Ventas;
+```
+
+### Índices de Bitmap (Bitmap Indexes)
+
+-   Usados en bases de datos de almacenes de datos para columnas con pocos valores únicos.
+-   Representan valores de columnas como bits, mejorando consultas con operaciones de combinación.
+
+```sql
+-- Sintaxis específica a la base de datos, por ejemplo, en Oracle
+CREATE BITMAP INDEX IDX_Bitmap ON Empleados(Genero);
+```
+
+### Índices Funcionales (Function-Based Indexes)
+
+-   Índices creados en el resultado de una función o expresión.
+-   Útil para consultas que filtran o clasifican por resultados de expresiones.
+
+```sql
+-- Ejemplo en Oracle
+CREATE INDEX IDX_Function ON Empleados(UPPER(Apellido));
+```
+
+### Índices Particionados (Partitioned Indexes)
+
+-   Índices que dividen grandes conjuntos de datos en particiones más pequeñas.
+-   Mejoran el rendimiento de consultas y mantenimiento de índices en grandes tablas.
+
+```sql
+-- Ejemplo en SQL Server
+CREATE PARTITIONED INDEX IDX_Partitioned ON Ventas(Fecha)
+ON (PARTITION BY RANGE (Fecha));
+```
+
+### Índices Filtrados (Filtered Indexes)
+
+-   Índices creados con una condición de filtro.
+-   Mejora el rendimiento y reduce el espacio de almacenamiento para consultas que solo afectan un subconjunto de datos.
+
+```sql
+-- Ejemplo en SQL Server
+CREATE INDEX IDX_Filtered ON Empleados(Estado)
+WHERE Estado = 'Activo';
+```
+
+Estos son algunos de los tipos de índices disponibles en las bases de datos. La elección del tipo de índice adecuado depende del tipo de consultas que se realicen y del esquema de datos de la base de datos.
+
+## Cómo y Por Qué Debes Actualizar los Índices
+
+Actualizar los índices en una base de datos es un proceso importante para mantener el rendimiento y la eficiencia de las consultas. A continuación, se explica cómo y por qué debes actualizar los índices.
+
+### ¿Por Qué Debes Actualizar los Índices?
+
+1. **Mejorar el Rendimiento:**
+
+    - Los índices pueden volverse fragmentados con el tiempo debido a operaciones de inserción, actualización y eliminación. Esto puede ralentizar las consultas.
+    - Mantener los índices actualizados asegura que las búsquedas y operaciones en la base de datos sean eficientes.
+
+2. **Optimizar el Uso del Espacio:**
+
+    - La fragmentación de índices puede llevar a un uso ineficiente del espacio en disco.
+    - La actualización de índices puede compactar y reorganizar los datos, utilizando mejor el espacio disponible.
+
+3. **Consistencia de Datos:**
+    - Las operaciones de mantenimiento de índices ayudan a mantener la integridad y consistencia de los datos indexados.
+
+### ¿Cómo Debes Actualizar los Índices?
+
+Aquí están algunas prácticas y comandos comunes para actualizar los índices en bases de datos SQL.
+
+#### 1. **Reorganizar Índices:**
+
+La reorganización de índices es una operación de mantenimiento más ligera que desfragmenta los índices reorganizando las páginas de índice. Esto no bloquea las tablas y puede realizarse en línea.
+
+```sql
+-- Ejemplo en SQL Server
+ALTER INDEX IDX_EmployeeID ON Empleados REORGANIZE;
+```
+
+#### 2. Reconstruir Índices:
+
+La reconstrucción de índices es una operación más intensiva que crea de nuevo el índice desde cero. Esto puede bloquear las tablas durante la operación, pero es más efectivo para eliminar la fragmentación.
+
+```sql
+-- Ejemplo en SQL Server
+ALTER INDEX IDX_EmployeeID ON Empleados REBUILD;
+```
+
+#### 3. Actualizar Estadísticas:
+
+Las estadísticas ayudan al optimizador de consultas a crear planes de ejecución eficientes. Las estadísticas pueden desactualizarse con el tiempo, afectando el rendimiento de las consultas.
+
+```sql
+-- Ejemplo en SQL Server
+UPDATE STATISTICS Empleados;
+```
+
+#### 4. Uso de Mantenimiento Automático:
+
+Muchos sistemas de bases de datos permiten configurar tareas de mantenimiento automático para actualizar los índices y estadísticas periódicamente.
+
+```sql
+-- Ejemplo en SQL Server usando un plan de mantenimiento
+-- Crear un plan de mantenimiento que incluya tareas de reorganización y reconstrucción de índices.
+```
+
+### ¿Cuándo Debes Actualizar los Índices?
+
+-   Periódicamente: Configura tareas de mantenimiento automático que actualicen los índices regularmente (por ejemplo, semanalmente o mensualmente).
+-   Después de Operaciones Masivas: Actualiza los índices después de operaciones masivas de inserción, actualización o eliminación que puedan causar una alta fragmentación.
+-   Basado en la Fragmentación: Monitorea la fragmentación de los índices y actualízalos cuando la fragmentación exceda un cierto umbral (por ejemplo, más del 30%).
+
+## Qué es el Fill Factor en Bases de Datos
+
+El **Fill Factor** (factor de llenado) es una configuración en las bases de datos que determina el porcentaje de espacio que se deja libre en cada página del índice durante su creación o reconstrucción. Este parámetro es importante para optimizar el rendimiento de las consultas y las operaciones de mantenimiento del índice.
+
+### ¿Qué es el Fill Factor?
+
+-   **Fill Factor** especifica el porcentaje de espacio en una página de índice que debe llenarse con datos.
+-   El valor del Fill Factor puede ser un número entre 1 y 100.
+    -   Un valor de 100 significa que las páginas de índice se llenarán completamente, sin dejar espacio libre para futuras inserciones o actualizaciones.
+    -   Un valor menor a 100 deja un porcentaje de espacio libre en cada página para acomodar futuras inserciones y actualizaciones sin causar fragmentación.
+
+### ¿Por Qué es Importante el Fill Factor?
+
+1. **Reducción de la Fragmentación:**
+
+    - Al dejar espacio libre en las páginas de índice, el Fill Factor reduce la necesidad de dividir páginas cuando se insertan nuevos datos. Esto ayuda a mantener los índices menos fragmentados.
+
+2. **Mejora del Rendimiento:**
+
+    - Un Fill Factor adecuado puede mejorar el rendimiento de las consultas, ya que las páginas de índice bien mantenidas reducen la cantidad de operaciones de E/S necesarias para acceder a los datos.
+
+3. **Optimización del Espacio:**
+    - Aunque dejar espacio libre puede aumentar el tamaño del índice en disco, mejora el rendimiento general del sistema al minimizar la fragmentación y la necesidad de reconstrucción frecuente de índices.
+
+### Cómo Configurar el Fill Factor
+
+El Fill Factor se puede configurar a nivel de índice o a nivel de servidor. A continuación se muestra cómo configurarlo en SQL Server:
+
+#### Configurar Fill Factor al Crear o Reconstituir un Índice
+
+```sql
+-- Crear un índice con un Fill Factor del 80%
+CREATE INDEX IDX_EmployeeID ON Empleados(EmployeeID)
+WITH (FILLFACTOR = 80);
+
+-- Reconstruir un índice con un Fill Factor del 70%
+ALTER INDEX IDX_EmployeeID ON Empleados
+REBUILD WITH (FILLFACTOR = 70);
+```
+
+#### Configurar el Fill Factor Predeterminado del Servidor
+
+El Fill Factor predeterminado del servidor se puede configurar para que se aplique a todos los índices que no tienen un Fill Factor específico definido.
+
+```sql
+-- Configurar el Fill Factor predeterminado del servidor al 90%
+EXEC sp_configure 'fill factor (%)', 90;
+RECONFIGURE;
+```
+
+### Cuándo ajustar el Fill Factor
+
+-   Altas Tasa de Inserciones/Actualizaciones: Si tu base de datos experimenta muchas inserciones y actualizaciones, un Fill Factor más bajo puede ser beneficioso para reducir la fragmentación.
+-   Baja Tasa de Inserciones/Actualizaciones: Si la mayoría de los datos se insertan una sola vez y no se actualizan con frecuencia, un Fill Factor más alto puede ser más eficiente en términos de espacio.
+-   Monitoreo y Ajuste: Monitorea el rendimiento y la fragmentación del índice regularmente. Ajusta el Fill Factor según sea necesario para equilibrar el rendimiento y el uso del espacio.
